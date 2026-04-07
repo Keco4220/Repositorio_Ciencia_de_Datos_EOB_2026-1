@@ -190,6 +190,19 @@ def compute_analysis_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
     extreme_count   = sum(1 for r in rows if r.get("insolation_class") == "extreme")
     unknown_count   = sum(1 for r in rows if r.get("insolation_class") == "unknown")
 
+    by_year: dict[str, int] = {}
+    by_decade: dict[str, int] = {}
+    for r in rows:
+        y = r.get("disc_year", "")
+        if y not in (None, ""):
+            by_year[str(y)] = by_year.get(str(y), 0) + 1
+        d = r.get("disc_decade", "")
+        if d not in (None, ""):
+            by_decade[str(d)] = by_decade.get(str(d), 0) + 1
+
+    by_year   = dict(sorted(by_year.items(),   key=lambda x: int(x[0]) if x[0].lstrip("-").isdigit() else 0))
+    by_decade = dict(sorted(by_decade.items(), key=lambda x: int(x[0]) if x[0].lstrip("-").isdigit() else 0))
+
     return {
         "total_rows":        total_rows,
         "rows_with_decade":  rows_with_decade,
@@ -201,6 +214,8 @@ def compute_analysis_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "hot_count":         hot_count,
         "extreme_count":     extreme_count,
         "unknown_count":     unknown_count,
+        "by_year":           by_year,
+        "by_decade":         by_decade,
     }
 
 
@@ -216,6 +231,12 @@ def print_summary(stats: dict[str, Any]) -> None:
     print(f"  Planetas calientes:                {stats['hot_count']:,}")
     print(f"  Planetas extremos:                 {stats['extreme_count']:,}")
     print(f"  Temperatura desconocida:           {stats['unknown_count']:,}")
+    print("  Descubrimientos por año:")
+    for year, count in stats["by_year"].items():
+        print(f"    {year}: {count:,}")
+    print("  Descubrimientos por década:")
+    for decade, count in stats["by_decade"].items():
+        print(f"    {decade}s: {count:,}")
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +281,7 @@ con tres columnas adicionales calculadas para análisis profundo.
 | Densidad media (Earth) | {stats['avg_density']:.6f} |
 | Densidad mínima | {stats['min_density']:.6f} |
 | Densidad máxima | {stats['max_density']:.6f} |
+{"".join(f"| Descubrimientos en {year} | {count:,} |{chr(10)}" for year, count in stats['by_year'].items())}{"".join(f"| Descubrimientos en década de {decade}s | {count:,} |{chr(10)}" for decade, count in stats['by_decade'].items())}
 
 ## Distribución por Clase de Insolación
 

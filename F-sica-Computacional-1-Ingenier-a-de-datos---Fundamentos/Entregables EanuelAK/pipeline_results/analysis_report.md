@@ -1,6 +1,6 @@
 # Reporte de Análisis Exoplanetario — Pipeline Entregable
 
-**Fecha de generación:** 2026-04-07T01:01:09.823681+00:00
+**Fecha de generación:** 2026-04-07T01:15:08.088299+00:00
 
 ## Resumen Ejecutivo
 
@@ -30,6 +30,45 @@ con tres columnas adicionales calculadas para análisis profundo.
 | Densidad media (Earth) | 2.436898 |
 | Densidad mínima | 0.005487 |
 | Densidad máxima | 2517.401320 |
+| Descubrimientos en 1992 | 2 |
+| Descubrimientos en 1994 | 1 |
+| Descubrimientos en 1995 | 1 |
+| Descubrimientos en 1996 | 6 |
+| Descubrimientos en 1997 | 1 |
+| Descubrimientos en 1998 | 6 |
+| Descubrimientos en 1999 | 13 |
+| Descubrimientos en 2000 | 16 |
+| Descubrimientos en 2001 | 12 |
+| Descubrimientos en 2002 | 29 |
+| Descubrimientos en 2003 | 22 |
+| Descubrimientos en 2004 | 27 |
+| Descubrimientos en 2005 | 36 |
+| Descubrimientos en 2006 | 32 |
+| Descubrimientos en 2007 | 52 |
+| Descubrimientos en 2008 | 63 |
+| Descubrimientos en 2009 | 91 |
+| Descubrimientos en 2010 | 98 |
+| Descubrimientos en 2011 | 135 |
+| Descubrimientos en 2012 | 139 |
+| Descubrimientos en 2013 | 128 |
+| Descubrimientos en 2014 | 869 |
+| Descubrimientos en 2015 | 155 |
+| Descubrimientos en 2016 | 1,496 |
+| Descubrimientos en 2017 | 152 |
+| Descubrimientos en 2018 | 315 |
+| Descubrimientos en 2019 | 196 |
+| Descubrimientos en 2020 | 235 |
+| Descubrimientos en 2021 | 554 |
+| Descubrimientos en 2022 | 369 |
+| Descubrimientos en 2023 | 326 |
+| Descubrimientos en 2024 | 260 |
+| Descubrimientos en 2025 | 241 |
+| Descubrimientos en 2026 | 8 |
+| Descubrimientos en década de 1990s | 30 |
+| Descubrimientos en década de 2000s | 380 |
+| Descubrimientos en década de 2010s | 3,683 |
+| Descubrimientos en década de 2020s | 1,993 |
+
 
 ## Distribución por Clase de Insolación
 
