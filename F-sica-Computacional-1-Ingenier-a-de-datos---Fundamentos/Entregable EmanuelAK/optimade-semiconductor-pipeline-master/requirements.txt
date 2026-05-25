@@ -1,0 +1,8 @@
+pandas
+numpy
+duckdb
+pyarrow
+mp-api
+pymatgen
+python-dotenv
+requests

@@ -1,0 +1,125 @@
+================================================================
+W11 — EXPLAIN ANALYZE — Baseline vs Optimizado
+Dataset: silver_planet_v3 (6087 filas)
+Fecha: 2026-05-19
+================================================================
+
+
+================================================================
+Q1 BASELINE
+================================================================
+Total Time: 0.0044s
+
+Árbol de ejecución:
+  QUERY
+  └── EXPLAIN_ANALYZE (0 rows)
+      └── TOP_N [Top: 20, ORDER BY count_star() DESC, avg(pl_rade) DESC]
+          └── FILTER [(count_star() >= 2)]  → 722 rows
+              └── HASH_GROUP_BY [Groups: lower(trim(hostname_canon)), Agg: count_star(), avg(pl_rade), avg(pl_bmasse)]  → 3,399 rows
+                  └── PROJECTION [lower(trim(hostname_canon)), pl_rade, pl_bmasse]  → 4,501 rows
+                      └── PROJECTION [hostname_canon, pl_rade, pl_bmasse]  → 4,501 rows
+                          └── TABLE_SCAN [silver_planet_v3, Sequential Scan]
+                                Projections: pl_rade, pl_bmasse, hostname_canon
+                                Filters: contains(lower(trim(discoverymethod_canon)), 'transit')
+                                         (pl_rade IS NOT NULL)
+                                         (pl_bmasse IS NOT NULL)
+                                >>> ROWS SCANNED: 4,501 <<<
+
+ANTI-PATRONES VISIBLES:
+  - Filters aplica lower(trim(...)) fila a fila sobre discoverymethod_canon (ya normalizado)
+  - contains(...) LIKE '%transit%' con wildcard inicial — no aprovecha predicado pushdown
+  - PROJECTION intermedia pasa todas las columnas del SELECT * de la subquery
+
+
+================================================================
+Q2 BASELINE
+================================================================
+Total Time: 0.0041s
+
+Árbol de ejecución:
+  QUERY
+  └── EXPLAIN_ANALYZE (0 rows)
+      └── PROJECTION [__internal_decompress_string(#0), #1, #2, #3]  → 4 rows
+          └── ORDER_BY [CASE WHEN disc_year_int < 2000 ... ASC]  → 4 rows   ← CASE evaluado 2ª vez
+              └── PROJECTION ...  → 4 rows
+                  └── PROJECTION [era_recomputed, n_unique_planets, avg_temp_k, avg_dist_pc]  → 4 rows
+                      └── PROJECTION ...  → 4 rows
+                          └── HASH_GROUP_BY [Groups: CASE WHEN disc_year_int..., Agg: count(DISTINCT pl_name), avg(CASE WHEN pl_eqt...), avg(CASE WHEN sy_dist...)]  → 4 rows
+                              └── PROJECTION [CASE WHEN disc_year_int..., pl_name, CASE WHEN pl_eqt..., CASE WHEN sy_dist...]  → 6,086 rows
+                                  └── TABLE_SCAN [silver_planet_v3, Sequential Scan]
+                                        Projections: disc_year_int, pl_name, pl_eqt, sy_dist
+                                        Filters: (disc_year_int IS NOT NULL)
+                                        >>> ROWS SCANNED: 6,086 <<<
+
+ANTI-PATRONES VISIBLES:
+  - CASE WHEN expresión aparece en PROJECTION (SELECT) y de nuevo en ORDER_BY (GROUP BY) — evaluación doble
+  - count(DISTINCT pl_name) mantiene hash set de 6086 valores para deduplicar — overhead
+  - AVG(CASE WHEN pl_eqt IS NOT NULL THEN pl_eqt END) — CASE redundante, AVG ya ignora NULLs
+
+
+================================================================
+Q1 OPTIMIZED
+================================================================
+Total Time: 0.0022s   (-50% vs baseline)
+
+Árbol de ejecución:
+  QUERY
+  └── EXPLAIN_ANALYZE (0 rows)
+      └── TOP_N [Top: 20, ORDER BY count_star() DESC, round(avg(pl_rade),4) DESC]  → 20 rows
+          └── PROJECTION [host, n_planets, avg_radius, avg_mass]  → 701 rows
+              └── FILTER [(count_star() >= 2)]  → 701 rows
+                  └── HASH_GROUP_BY [Groups: hostname_canon, Agg: count_star(), avg(pl_rade), avg(pl_bmasse)]  → 3,396 rows
+                      └── PROJECTION [hostname_canon, pl_rade, pl_bmasse]  → 4,464 rows
+                          └── TABLE_SCAN [silver_planet_v3, Sequential Scan]
+                                Projections: pl_rade, pl_bmasse, hostname_canon
+                                Filters: discoverymethod_canon='transit'   ← igualdad directa
+                                         (pl_rade IS NOT NULL)
+                                         (pl_bmasse IS NOT NULL)
+                                >>> ROWS SCANNED: 4,464 <<<
+
+MEJORAS VISIBLES:
+  - Filters: discoverymethod_canon='transit' — comparación directa, sin funciones
+  - Eliminada la PROJECTION doble de la subquery SELECT *
+  - GROUP BY sobre hostname_canon directamente (sin lower/trim)
+  - Árbol más limpio: 1 PROJECTION menos vs baseline
+
+
+================================================================
+Q2 OPTIMIZED
+================================================================
+Total Time: 0.0017s   (-59% vs baseline)
+
+Árbol de ejecución:
+  QUERY
+  └── EXPLAIN_ANALYZE (0 rows)
+      └── PROJECTION [__internal_decompress_string(#0), #1, #2, #3]  → 4 rows
+          └── ORDER_BY [disc_era ASC]  → 4 rows   ← columna directa, sin CASE
+              └── PROJECTION ...  → 4 rows
+                  └── PROJECTION [disc_era, n_planets, avg_temp_k, avg_dist_pc]  → 4 rows
+                      └── PROJECTION ...  → 4 rows
+                          └── HASH_GROUP_BY [Groups: disc_era, Agg: count_star(), avg(pl_eqt), avg(sy_dist)]  → 4 rows
+                              └── PROJECTION [disc_era, pl_eqt, sy_dist]  → 6,086 rows
+                                  └── TABLE_SCAN [silver_planet_v3, Sequential Scan]
+                                        Projections: disc_era, pl_eqt, sy_dist
+                                        Filters: disc_era!='unknown'
+                                        >>> ROWS SCANNED: 6,086 <<<
+
+MEJORAS VISIBLES:
+  - ORDER_BY usa disc_era directamente en lugar de la expresión CASE completa
+  - HASH_GROUP_BY: count_star() en lugar de count(DISTINCT pl_name) — sin hash set de deduplicación
+  - HASH_GROUP_BY: avg(pl_eqt) nativo en lugar de avg(CASE WHEN ...) — sin CASE por fila
+  - PROJECTION final más simple (3 columnas en lugar de 4 con los CASE)
+
+
+================================================================
+RESUMEN COMPARATIVO
+================================================================
+
+  Query         Baseline (s)   Optimized (s)   Reducción
+  ──────────────────────────────────────────────────────
+  Q1            0.0044s        0.0022s         -50%
+  Q2            0.0041s        0.0017s         -59%
+
+  Rows scanned Q1:  baseline=4,501  optimized=4,464  (filter más preciso)
+  Rows scanned Q2:  6,086 en ambos  (full scan necesario para agregación por era)
+  Diferencia Q2 viene de eliminar operaciones por fila (CASE, COUNT DISTINCT, CASE en AVG)

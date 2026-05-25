@@ -1,0 +1,12 @@
+discoverymethod,n_planets,avg_pl_rade,avg_pl_bmasse,min_disc_year,max_disc_year
+Transit,4487,4.3651,123.7694,2002,2026
+Radial Velocity,1161,9.7915,1039.8347,1995,2026
+Microlensing,265,9.86,800.5448,2004,2026
+Imaging,86,13.446,4498.628,2004,2026
+Transit Timing Variations,39,6.4934,484.3989,2011,2025
+Eclipse Timing Variations,17,12.8933,2102.7224,2009,2023
+Orbital Brightness Modulation,9,9.645,350.324,2011,2021
+Pulsar Timing,8,5.4113,278.1555,1992,2024
+Astrometry,6,12.45,4673.6101,2013,2025
+Pulsation Timing Variations,2,12.75,2383.725,2007,2016
+Disk Kinematics,1,13.3,794.575,2019,2019

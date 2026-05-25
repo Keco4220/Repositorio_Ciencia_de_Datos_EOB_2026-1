@@ -1,0 +1,57 @@
+=== SIN PRUNING — TABLE_SCAN sobre silver_planet_v3 (6087 filas) ===
+
+Query:
+  SELECT discoverymethod_canon, COUNT(*) AS n
+  FROM silver_planet_v3
+  GROUP BY discoverymethod_canon
+  ORDER BY n DESC
+
+Plan:
+  QUERY
+  └── EXPLAIN_ANALYZE (0 rows, 0.00s)
+      └── ORDER_BY [count_star() DESC] (11 rows, 0.00s)
+          └── HASH_GROUP_BY [Groups: discoverymethod_canon, Agg: count_star()] (11 rows, 0.00s)
+              └── PROJECTION [discoverymethod_canon] (6,087 rows, 0.00s)
+                  └── TABLE_SCAN [Table: exoplanets.main.silver_planet_v3]
+                        Type: Sequential Scan
+                        Projections: discoverymethod_canon
+                        >>> ROWS SCANNED: 6,087 <<<
+
+Total Time: ~0.003s
+
+
+=== CON PRUNING — READ_PARQUET sobre disc_era=2010s (3683 filas) ===
+
+Query:
+  SELECT discoverymethod_canon, COUNT(*) AS n
+  FROM read_parquet('.../disc_era=2010s/data.parquet')
+  GROUP BY discoverymethod_canon
+  ORDER BY n DESC
+
+Plan:
+  QUERY
+  └── EXPLAIN_ANALYZE (0 rows, 0.00s)
+      └── ORDER_BY [count_star() DESC] (11 rows, 0.00s)
+          └── HASH_GROUP_BY [Groups: discoverymethod_canon, Agg: count_star()] (11 rows, 0.00s)
+              └── PROJECTION [discoverymethod_canon] (3,683 rows, 0.00s)
+                  └── TABLE_SCAN [Function: READ_PARQUET]
+                        Total Files Read: 1
+                        Filename: disc_era=2010s/data.parquet
+                        Projections: discoverymethod_canon
+                        >>> ROWS SCANNED: 3,683 <<<
+
+Total Time: ~0.003s
+
+
+=== COMPARACIÓN RESUMEN ===
+
+  Escenario              Filas escaneadas   Archivos abiertos   Reducción
+  ─────────────────────────────────────────────────────────────────────────
+  Sin pruning            6,087              1 (tabla entera)    —
+  Pruning disc_era=2010s 3,683              1 (solo ese .parq)  -39.5%
+  Pruning disc_era=pre-2000    30           1 (solo ese .parq)  -99.5%
+  Pruning disc_era=2020s 1,993              1 (solo ese .parq)  -67.3%
+
+Filtro utilizado: WHERE disc_era = '2010s'
+Columna de partición: disc_era (valores: pre-2000 | 2000s | 2010s | 2020s | unknown)
+Formato de archivo: Parquet (columnar, comprimido por defecto con Snappy en DuckDB)

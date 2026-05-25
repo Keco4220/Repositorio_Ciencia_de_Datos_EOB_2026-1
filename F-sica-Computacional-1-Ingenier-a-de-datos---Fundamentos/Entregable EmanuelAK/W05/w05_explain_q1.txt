@@ -1,0 +1,58 @@
+=== EXPLAIN ANALYZE — TU TURNO 1 ===
+Query ejecutada sobre fact_planet (6081 filas)
+
+SQL:
+  SELECT discoverymethod, COUNT(*) AS n
+  FROM fact_planet
+  WHERE disc_year >= 2010
+    AND discoverymethod IS NOT NULL
+  GROUP BY discoverymethod
+  ORDER BY n DESC
+
+Plan de ejecucion (arbol de operadores, de abajo hacia arriba):
+
+  [1] SEQ SCAN fact_planet
+      Filas leidas:   6081
+      Columnas:       discoverymethod, disc_year
+      Costo estimado: alto (tabla completa)
+
+  [2] FILTER
+      Condicion:  disc_year >= 2010 AND discoverymethod NOT NULL
+      Entrada:    6081 filas
+      Salida:     5672 filas
+      Descartadas: 409 (planetas anteriores a 2010)
+
+  [3] HASH GROUP BY
+      Clave:      discoverymethod
+      Entrada:    5672 filas
+      Salida:     11 grupos
+      Costo:      bajo (pocos grupos)
+
+  [4] ORDER BY n DESC
+      Entrada:    11 filas
+      Salida:     11 filas
+      Costo:      despreciable
+
+Resultado final:
+  ('Transit', 4425)
+  ('Radial Velocity', 845)
+  ('Microlensing', 255)
+  ('Imaging', 71)
+  ('Transit Timing Variations', 39)
+  ('Eclipse Timing Variations', 16)
+  ('Orbital Brightness Modulation', 9)
+  ('Astrometry', 6)
+  ('Pulsar Timing', 4)
+  ('Disk Kinematics', 1)
+  ('Pulsation Timing Variations', 1)
+
+Tiempos aproximados:
+  SEQ SCAN + FILTER:  0.75 ms  (costo dominante)
+  HASH GROUP BY:      0.18 ms
+  ORDER BY:           0.02 ms
+  Total:              ~0.95 ms
+
+Conclusion:
+  El 79% del costo esta en leer y filtrar la tabla.
+  GROUP BY y ORDER BY son casi gratuitos con solo 11 grupos.
+  Mejora posible: indice en disc_year para evitar full scan.

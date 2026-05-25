@@ -1,0 +1,22 @@
+{
+  "raw_file": "data/raw/pscomppars.csv",
+  "raw_sha256": "d89390c3ccfcced5e13815e9b5025057774ac0c0b958e1cab434ca97252531b3",
+  "file_size_bytes": 930507,
+  "n_rows": 6087,
+  "n_cols": 16,
+  "null_pl_name": 0,
+  "dup_pl_name": 0,
+  "null_disc_year": 1,
+  "disc_year_out_of_range_count": 8,
+  "disc_year_out_of_range_note": "8 planetas con disc_year=2026 (publicaciones adelantadas)",
+  "null_sy_dist": 27,
+  "null_pl_orbper": 321,
+  "null_pl_rade": 50,
+  "null_pl_bmasse": 31,
+  "null_pl_eqt": 1539,
+  "null_st_teff": 280,
+  "null_st_rad": 302,
+  "null_st_mass": 7,
+  "timestamp": 1773865933,
+  "generated_by": "W01B notebook"
+}

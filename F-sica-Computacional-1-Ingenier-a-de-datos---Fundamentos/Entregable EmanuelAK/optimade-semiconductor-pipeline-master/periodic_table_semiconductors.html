@@ -1,0 +1,212 @@
+
+<h2 class="sr-only">Tabla periódica interactiva de semiconductores — haz clic en un elemento para ver la mejor aleación del pipeline.</h2>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+#pt-wrap{padding:1rem 0}
+#controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+#controls label{font-size:12px;color:var(--color-text-secondary)}
+#mode-btn{font-size:12px;padding:4px 10px;cursor:pointer;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary)}
+#mode-btn:hover{background:var(--color-background-tertiary)}
+#legend{display:flex;gap:4px;align-items:center;margin-left:auto}
+.leg-box{width:12px;height:12px;border-radius:2px}
+#legend span{font-size:11px;color:var(--color-text-secondary)}
+#pt-grid{display:grid;grid-template-columns:repeat(18,1fr);gap:2px;width:100%}
+.cell{border-radius:4px;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 1px;min-height:38px;border:0.5px solid transparent;transition:transform 0.1s,border-color 0.1s;position:relative}
+.cell.has-data{cursor:pointer}
+.cell.has-data:hover{transform:scale(1.12);z-index:10;border-color:var(--color-border-primary)}
+.cell.active{transform:scale(1.12);z-index:10;border-color:var(--color-border-primary);outline:2px solid #378ADD}
+.cell .sym{font-size:11px;font-weight:500;line-height:1;color:var(--color-text-primary)}
+.cell .num{font-size:8px;color:var(--color-text-secondary);line-height:1}
+.cell.empty{background:transparent;border:none;cursor:default}
+.cell.no-data{background:var(--color-background-secondary);opacity:0.5}
+.cell.no-data .sym{color:var(--color-text-tertiary)}
+#panel{margin-top:12px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;background:var(--color-background-primary);display:none}
+#panel.visible{display:block}
+#panel-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+#panel-elem{font-size:28px;font-weight:500;color:var(--color-text-primary)}
+#panel-formula{font-size:18px;font-weight:500;color:#185FA5;margin-bottom:2px}
+#panel-id{font-size:11px;color:var(--color-text-tertiary)}
+#panel-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.badge{font-size:11px;padding:3px 8px;border-radius:var(--border-radius-md);font-weight:500}
+.badge-direct{background:#EAF3DE;color:#3B6D11}
+.badge-indirect{background:#F1EFE8;color:#5F5E5A}
+.badge-stable{background:#E1F5EE;color:#0F6E56}
+.badge-crystal{background:#E6F1FB;color:#185FA5}
+#panel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:500px){#panel-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px}
+.stat-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.stat-val{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.stat-unit{font-size:10px;color:var(--color-text-tertiary);margin-left:2px}
+#score-bar-wrap{margin-top:12px}
+#score-bar-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+#score-bar-bg{background:var(--color-background-secondary);border-radius:4px;height:8px;width:100%;overflow:hidden}
+#score-bar-fill{height:8px;border-radius:4px;background:#378ADD;transition:width 0.4s}
+#score-val{font-size:11px;color:var(--color-text-secondary);margin-top:2px;text-align:right}
+#elem-stats{margin-top:12px;border-top:0.5px solid var(--color-border-tertiary);padding-top:10px}
+#elem-stats-title{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px}
+#elem-stats-row{display:flex;gap:16px;flex-wrap:wrap}
+.elem-stat{font-size:12px;color:var(--color-text-primary)}
+.elem-stat span{color:var(--color-text-secondary);font-size:11px}
+#panel-mp-link{font-size:11px;color:#185FA5;cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block}
+#tip{font-size:11px;color:var(--color-text-tertiary);margin-top:8px;text-align:center}
+#panel-elems{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+.el-pill{font-size:11px;padding:2px 7px;border-radius:10px;background:#E6F1FB;color:#185FA5;font-weight:500}
+.el-pill.active-el{background:#185FA5;color:#fff}
+</style>
+
+<div id="pt-wrap">
+  <div id="controls">
+    <label>Color por:</label>
+    <button id="mode-btn" onclick="toggleMode()">Score semiconductor</button>
+    <div id="legend">
+      <div class="leg-box" style="background:#B5D4F4"></div>
+      <span>bajo</span>
+      <div class="leg-box" style="background:#378ADD;margin-left:2px"></div>
+      <span>medio</span>
+      <div class="leg-box" style="background:#0C447C;margin-left:2px"></div>
+      <span>alto</span>
+    </div>
+  </div>
+  <div id="pt-grid"></div>
+  <div id="tip">Haz clic en un elemento resaltado para ver su mejor aleación semiconductora</div>
+  <div id="panel">
+    <div id="panel-header">
+      <div>
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div id="panel-elem"></div>
+          <div>
+            <div id="panel-formula"></div>
+            <div id="panel-id"></div>
+          </div>
+        </div>
+        <div id="panel-elems" style="margin-top:6px"></div>
+        <div id="panel-badges"></div>
+      </div>
+    </div>
+    <div id="panel-grid"></div>
+    <div id="score-bar-wrap">
+      <div id="score-bar-label">Score semiconductor</div>
+      <div id="score-bar-bg"><div id="score-bar-fill"></div></div>
+      <div id="score-val"></div>
+    </div>
+    <div id="elem-stats">
+      <div id="elem-stats-title"></div>
+      <div id="elem-stats-row"></div>
+    </div>
+    <span id="panel-mp-link"></span>
+  </div>
+</div>
+
+<script>
+const ELEM_MAP = {"P":{"id":"mp-4763","formula":"ZnSiP2","elements":["P","Si","Zn"],"band_gap":1.3641,"is_gap_direct":true,"density":3.419,"bulk_modulus":85.0,"shear_modulus":54.2,"energy_above_hull":0.0,"formation_energy":-0.3917,"n":3.245,"crystal_system":"Tetragonal","score":1.0327,"is_stable":true,"nelements":3},"Si":{"id":"mp-4763","formula":"ZnSiP2","elements":["P","Si","Zn"],"band_gap":1.3641,"is_gap_direct":true,"density":3.419,"bulk_modulus":85.0,"shear_modulus":54.2,"energy_above_hull":0.0,"formation_energy":-0.3917,"n":3.245,"crystal_system":"Tetragonal","score":1.0327,"is_stable":true,"nelements":3},"Zn":{"id":"mp-4763","formula":"ZnSiP2","elements":["P","Si","Zn"],"band_gap":1.3641,"is_gap_direct":true,"density":3.419,"bulk_modulus":85.0,"shear_modulus":54.2,"energy_above_hull":0.0,"formation_energy":-0.3917,"n":3.245,"crystal_system":"Tetragonal","score":1.0327,"is_stable":true,"nelements":3},"As":{"id":"mp-1016197","formula":"MgSiAs2","elements":["As","Mg","Si"],"band_gap":1.3032,"is_gap_direct":true,"density":3.591,"bulk_modulus":58.0,"shear_modulus":28.7,"energy_above_hull":0.0,"formation_energy":-0.2973,"n":3.189,"crystal_system":"Tetragonal","score":1.0216,"is_stable":true,"nelements":3},"Mg":{"id":"mp-1016197","formula":"MgSiAs2","elements":["As","Mg","Si"],"band_gap":1.3032,"is_gap_direct":true,"density":3.591,"bulk_modulus":58.0,"shear_modulus":28.7,"energy_above_hull":0.0,"formation_energy":-0.2973,"n":3.189,"crystal_system":"Tetragonal","score":1.0216,"is_stable":true,"nelements":3},"Ca":{"id":"mp-1078908","formula":"Ca2CdP2","elements":["Ca","Cd","P"],"band_gap":1.2927,"is_gap_direct":true,"density":3.545,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.8925,"n":3.055,"crystal_system":"Orthorhombic","score":1.0204,"is_stable":true,"nelements":3},"Cd":{"id":"mp-1078908","formula":"Ca2CdP2","elements":["Ca","Cd","P"],"band_gap":1.2927,"is_gap_direct":true,"density":3.545,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.8925,"n":3.055,"crystal_system":"Orthorhombic","score":1.0204,"is_stable":true,"nelements":3},"Al":{"id":"mp-1205337","formula":"Ca3(AlP2)2","elements":["Al","Ca","P"],"band_gap":1.2482,"is_gap_direct":true,"density":2.467,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.1763,"n":2.946,"crystal_system":"Monoclinic","score":1.0186,"is_stable":true,"nelements":3},"Ba":{"id":"mp-1105549","formula":"BaHfS3","elements":["Ba","Hf","S"],"band_gap":1.2524,"is_gap_direct":true,"density":5.548,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-2.1398,"n":2.925,"crystal_system":"Orthorhombic","score":1.0167,"is_stable":true,"nelements":3},"Hf":{"id":"mp-1105549","formula":"BaHfS3","elements":["Ba","Hf","S"],"band_gap":1.2524,"is_gap_direct":true,"density":5.548,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-2.1398,"n":2.925,"crystal_system":"Orthorhombic","score":1.0167,"is_stable":true,"nelements":3},"S":{"id":"mp-1105549","formula":"BaHfS3","elements":["Ba","Hf","S"],"band_gap":1.2524,"is_gap_direct":true,"density":5.548,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-2.1398,"n":2.925,"crystal_system":"Orthorhombic","score":1.0167,"is_stable":true,"nelements":3},"Sr":{"id":"mp-1189305","formula":"Sr3(AlAs2)2","elements":["Al","As","Sr"],"band_gap":1.1456,"is_gap_direct":true,"density":4.209,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.1546,"n":3.053,"crystal_system":"Monoclinic","score":1.0165,"is_stable":true,"nelements":3},"In":{"id":"mp-19913","formula":"Ba3(InP2)2","elements":["Ba","In","P"],"band_gap":1.1092,"is_gap_direct":true,"density":4.603,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.7858,"n":3.116,"crystal_system":"Monoclinic","score":1.0092,"is_stable":true,"nelements":3},"Ag":{"id":"mp-29163","formula":"Ag2TeS3","elements":["Ag","S","Te"],"band_gap":1.2999,"is_gap_direct":true,"density":5.146,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.0789,"n":2.888,"crystal_system":"Monoclinic","score":1.0076,"is_stable":true,"nelements":3},"Te":{"id":"mp-29163","formula":"Ag2TeS3","elements":["Ag","S","Te"],"band_gap":1.2999,"is_gap_direct":true,"density":5.146,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.0789,"n":2.888,"crystal_system":"Monoclinic","score":1.0076,"is_stable":true,"nelements":3},"Na":{"id":"mp-13275","formula":"NaSrP","elements":["Na","P","Sr"],"band_gap":1.2357,"is_gap_direct":true,"density":3.09,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.9636,"n":2.805,"crystal_system":"Hexagonal","score":1.0067,"is_stable":true,"nelements":3},"K":{"id":"mp-14206","formula":"K3Ag3As2","elements":["Ag","As","K"],"band_gap":1.2533,"is_gap_direct":true,"density":4.426,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.3501,"n":2.811,"crystal_system":"Trigonal","score":1.0064,"is_stable":true,"nelements":3},"F":{"id":"mp-27175","formula":"InOF","elements":["F","In","O"],"band_gap":1.3307,"is_gap_direct":true,"density":6.545,"bulk_modulus":135.3,"shear_modulus":57.0,"energy_above_hull":0.0,"formation_energy":-2.3757,"n":null,"crystal_system":"Orthorhombic","score":0.9918,"is_stable":true,"nelements":3},"O":{"id":"mp-27175","formula":"InOF","elements":["F","In","O"],"band_gap":1.3307,"is_gap_direct":true,"density":6.545,"bulk_modulus":135.3,"shear_modulus":57.0,"energy_above_hull":0.0,"formation_energy":-2.3757,"n":null,"crystal_system":"Orthorhombic","score":0.9918,"is_stable":true,"nelements":3},"Se":{"id":"mp-1190","formula":"ZnSe","elements":["Se","Zn"],"band_gap":1.1663,"is_gap_direct":true,"density":5.275,"bulk_modulus":56.5,"shear_modulus":27.3,"energy_above_hull":0.0,"formation_energy":-0.9516,"n":2.706,"crystal_system":"Cubic","score":0.9882,"is_stable":true,"nelements":2},"Ga":{"id":"mp-9666","formula":"K2NaGaP2","elements":["Ga","K","Na","P"],"band_gap":1.3079,"is_gap_direct":true,"density":2.538,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.4434,"n":2.57,"crystal_system":"Orthorhombic","score":0.9719,"is_stable":true,"nelements":4},"Li":{"id":"mp-1101989","formula":"SrLiAs","elements":["As","Li","Sr"],"band_gap":1.0323,"is_gap_direct":true,"density":4.042,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.1998,"n":2.989,"crystal_system":"Orthorhombic","score":0.9709,"is_stable":true,"nelements":3},"Ge":{"id":"mp-3917","formula":"Cd2GeO4","elements":["Cd","Ge","O"],"band_gap":1.0923,"is_gap_direct":true,"density":6.187,"bulk_modulus":99.7,"shear_modulus":33.8,"energy_above_hull":0.0,"formation_energy":-1.7617,"n":null,"crystal_system":"Orthorhombic","score":0.9688,"is_stable":true,"nelements":3},"N":{"id":"mp-10577","formula":"Sr5NbN5","elements":["N","Nb","Sr"],"band_gap":1.2468,"is_gap_direct":true,"density":4.636,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.042,"n":2.477,"crystal_system":"Orthorhombic","score":0.9687,"is_stable":true,"nelements":3},"Nb":{"id":"mp-10577","formula":"Sr5NbN5","elements":["N","Nb","Sr"],"band_gap":1.2468,"is_gap_direct":true,"density":4.636,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.042,"n":2.477,"crystal_system":"Orthorhombic","score":0.9687,"is_stable":true,"nelements":3},"Ta":{"id":"mp-5475","formula":"NaTaN2","elements":["N","Na","Ta"],"band_gap":1.2765,"is_gap_direct":false,"density":8.088,"bulk_modulus":136.0,"shear_modulus":88.9,"energy_above_hull":0.0,"formation_energy":-1.1393,"n":2.986,"crystal_system":"Trigonal","score":0.9682,"is_stable":true,"nelements":3},"I":{"id":"mp-23202","formula":"InI","elements":["I","In"],"band_gap":1.3412,"is_gap_direct":true,"density":5.312,"bulk_modulus":13.3,"shear_modulus":7.5,"energy_above_hull":0.0,"formation_energy":-0.6524,"n":2.908,"crystal_system":"Orthorhombic","score":0.9646,"is_stable":true,"nelements":2},"Zr":{"id":"mp-540771","formula":"BaZrS3","elements":["Ba","S","Zr"],"band_gap":0.99,"is_gap_direct":true,"density":4.262,"bulk_modulus":70.0,"shear_modulus":33.6,"energy_above_hull":0.0,"formation_energy":-2.1077,"n":3.096,"crystal_system":"Orthorhombic","score":0.9646,"is_stable":true,"nelements":3},"Cu":{"id":"mp-8017","formula":"AlCuTe2","elements":["Al","Cu","Te"],"band_gap":1.0186,"is_gap_direct":true,"density":5.25,"bulk_modulus":49.9,"shear_modulus":24.6,"energy_above_hull":0.0,"formation_energy":-0.4252,"n":3.171,"crystal_system":"Tetragonal","score":0.9629,"is_stable":true,"nelements":3},"V":{"id":"mp-17696","formula":"Ba2VN3","elements":["Ba","N","V"],"band_gap":1.3876,"is_gap_direct":true,"density":5.423,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.2169,"n":2.692,"crystal_system":"Orthorhombic","score":0.9627,"is_stable":true,"nelements":3},"B":{"id":"mp-1479","formula":"BP","elements":["B","P"],"band_gap":1.2435,"is_gap_direct":false,"density":2.981,"bulk_modulus":162.0,"shear_modulus":161.9,"energy_above_hull":0.0,"formation_energy":-0.4833,"n":3.029,"crystal_system":"Cubic","score":0.961,"is_stable":true,"nelements":2},"Mo":{"id":"mp-31231","formula":"Sr5Mo2N7","elements":["Mo","N","Sr"],"band_gap":1.2258,"is_gap_direct":true,"density":4.822,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.0861,"n":2.401,"crystal_system":"Triclinic","score":0.96,"is_stable":true,"nelements":3},"Au":{"id":"mp-557090","formula":"Bi2Au5F21","elements":["Au","Bi","F"],"band_gap":1.2285,"is_gap_direct":true,"density":6.469,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.7514,"n":null,"crystal_system":"Tetragonal","score":0.956,"is_stable":true,"nelements":3},"Bi":{"id":"mp-557090","formula":"Bi2Au5F21","elements":["Au","Bi","F"],"band_gap":1.2285,"is_gap_direct":true,"density":6.469,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.7514,"n":null,"crystal_system":"Tetragonal","score":0.956,"is_stable":true,"nelements":3},"Cl":{"id":"mp-1195835","formula":"Ga2SbTe4Cl7","elements":["Cl","Ga","Sb","Te"],"band_gap":1.2309,"is_gap_direct":true,"density":3.554,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.1584,"n":null,"crystal_system":"Monoclinic","score":0.956,"is_stable":true,"nelements":4},"Sb":{"id":"mp-1195835","formula":"Ga2SbTe4Cl7","elements":["Cl","Ga","Sb","Te"],"band_gap":1.2309,"is_gap_direct":true,"density":3.554,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.1584,"n":null,"crystal_system":"Monoclinic","score":0.956,"is_stable":true,"nelements":4},"Rb":{"id":"mp-542067","formula":"Rb4Ti3S14","elements":["Rb","S","Ti"],"band_gap":1.2429,"is_gap_direct":true,"density":2.862,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.338,"n":null,"crystal_system":"Monoclinic","score":0.9557,"is_stable":true,"nelements":3},"Ti":{"id":"mp-542067","formula":"Rb4Ti3S14","elements":["Rb","S","Ti"],"band_gap":1.2429,"is_gap_direct":true,"density":2.862,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.338,"n":null,"crystal_system":"Monoclinic","score":0.9557,"is_stable":true,"nelements":3},"Sn":{"id":"mp-568525","formula":"Sr2SnSe5","elements":["Se","Sn","Sr"],"band_gap":1.2442,"is_gap_direct":true,"density":5.164,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-1.3603,"n":null,"crystal_system":"Orthorhombic","score":0.9556,"is_stable":true,"nelements":3},"W":{"id":"mp-29051","formula":"WS9Cl4","elements":["Cl","S","W"],"band_gap":1.2552,"is_gap_direct":true,"density":2.161,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.8433,"n":null,"crystal_system":"Tetragonal","score":0.955,"is_stable":true,"nelements":3},"H":{"id":"mp-1195299","formula":"K3Np(HO3)2","elements":["H","K","Np","O"],"band_gap":1.1955,"is_gap_direct":true,"density":3.924,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-2.3205,"n":null,"crystal_system":"Orthorhombic","score":0.9545,"is_stable":true,"nelements":4},"Np":{"id":"mp-1195299","formula":"K3Np(HO3)2","elements":["H","K","Np","O"],"band_gap":1.1955,"is_gap_direct":true,"density":3.924,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-2.3205,"n":null,"crystal_system":"Orthorhombic","score":0.9545,"is_stable":true,"nelements":4},"Pd":{"id":"mp-1189263","formula":"Pd(NO3)2","elements":["N","O","Pd"],"band_gap":1.3005,"is_gap_direct":true,"density":3.183,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.7559,"n":null,"crystal_system":"Monoclinic","score":0.9489,"is_stable":true,"nelements":3},"C":{"id":"mp-30295","formula":"W6CCl18","elements":["C","Cl","W"],"band_gap":1.1557,"is_gap_direct":true,"density":4.547,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.9013,"n":null,"crystal_system":"Hexagonal","score":0.9488,"is_stable":true,"nelements":3},"Br":{"id":"mp-647343","formula":"PBr7","elements":["Br","P"],"band_gap":1.2227,"is_gap_direct":true,"density":3.511,"bulk_modulus":null,"shear_modulus":null,"energy_above_hull":0.0,"formation_energy":-0.7206,"n":2.208,"crystal_system":"Orthorhombic","score":0.9381,"is_stable":true,"nelements":2}};
+
+const ELEM_STATS = {"Si":{"count":13,"avg_bg":1.2,"avg_score":0.9631,"stable_count":12,"direct_count":13},"Zn":{"count":11,"avg_bg":1.209,"avg_score":0.9617,"stable_count":7,"direct_count":9},"Mg":{"count":5,"avg_bg":1.248,"avg_score":0.9616,"stable_count":4,"direct_count":4},"V":{"count":2,"avg_bg":1.267,"avg_score":0.9548,"stable_count":2,"direct_count":2},"B":{"count":2,"avg_bg":1.288,"avg_score":0.9513,"stable_count":2,"direct_count":1},"Sr":{"count":20,"avg_bg":1.203,"avg_score":0.951,"stable_count":16,"direct_count":20},"In":{"count":10,"avg_bg":1.245,"avg_score":0.95,"stable_count":9,"direct_count":9},"Hf":{"count":5,"avg_bg":1.322,"avg_score":0.9495,"stable_count":5,"direct_count":4},"Al":{"count":18,"avg_bg":1.208,"avg_score":0.9491,"stable_count":16,"direct_count":15},"Te":{"count":18,"avg_bg":1.166,"avg_score":0.9488,"stable_count":15,"direct_count":17},"Ta":{"count":6,"avg_bg":1.183,"avg_score":0.9484,"stable_count":5,"direct_count":5},"P":{"count":43,"avg_bg":1.234,"avg_score":0.9484,"stable_count":39,"direct_count":38},"Np":{"count":2,"avg_bg":1.156,"avg_score":0.9466,"stable_count":2,"direct_count":2},"F":{"count":10,"avg_bg":1.246,"avg_score":0.9457,"stable_count":7,"direct_count":10},"C":{"count":2,"avg_bg":1.236,"avg_score":0.9446,"stable_count":2,"direct_count":1},"Ca":{"count":10,"avg_bg":1.207,"avg_score":0.9444,"stable_count":10,"direct_count":7},"N":{"count":14,"avg_bg":1.279,"avg_score":0.9437,"stable_count":14,"direct_count":12},"Cd":{"count":15,"avg_bg":1.183,"avg_score":0.9433,"stable_count":14,"direct_count":15},"As":{"count":26,"avg_bg":1.144,"avg_score":0.9432,"stable_count":25,"direct_count":21},"W":{"count":5,"avg_bg":1.237,"avg_score":0.9425,"stable_count":5,"direct_count":5},"Na":{"count":16,"avg_bg":1.218,"avg_score":0.9421,"stable_count":15,"direct_count":13},"K":{"count":22,"avg_bg":1.233,"avg_score":0.9421,"stable_count":19,"direct_count":21},"Ag":{"count":21,"avg_bg":1.184,"avg_score":0.9399,"stable_count":16,"direct_count":19},"Nb":{"count":9,"avg_bg":1.257,"avg_score":0.9391,"stable_count":8,"direct_count":8},"Se":{"count":43,"avg_bg":1.277,"avg_score":0.9388,"stable_count":35,"direct_count":41},"Ga":{"count":16,"avg_bg":1.186,"avg_score":0.9384,"stable_count":15,"direct_count":15},"O":{"count":23,"avg_bg":1.284,"avg_score":0.9383,"stable_count":18,"direct_count":21},"Au":{"count":5,"avg_bg":1.22,"avg_score":0.9383,"stable_count":5,"direct_count":4},"Ba":{"count":32,"avg_bg":1.215,"avg_score":0.9381,"stable_count":29,"direct_count":30},"Sn":{"count":10,"avg_bg":1.253,"avg_score":0.938,"stable_count":9,"direct_count":10},"H":{"count":2,"avg_bg":1.295,"avg_score":0.9379,"stable_count":2,"direct_count":2},"Pd":{"count":3,"avg_bg":1.227,"avg_score":0.9369,"stable_count":1,"direct_count":3},"S":{"count":44,"avg_bg":1.189,"avg_score":0.9364,"stable_count":31,"direct_count":44},"Li":{"count":13,"avg_bg":1.249,"avg_score":0.9362,"stable_count":11,"direct_count":10},"Ti":{"count":7,"avg_bg":1.154,"avg_score":0.9354,"stable_count":7,"direct_count":7},"Bi":{"count":6,"avg_bg":1.228,"avg_score":0.9353,"stable_count":4,"direct_count":6},"Zr":{"count":5,"avg_bg":1.166,"avg_score":0.9349,"stable_count":3,"direct_count":5},"Rb":{"count":18,"avg_bg":1.246,"avg_score":0.9346,"stable_count":15,"direct_count":17},"Mo":{"count":3,"avg_bg":1.337,"avg_score":0.9345,"stable_count":2,"direct_count":3},"Cl":{"count":18,"avg_bg":1.259,"avg_score":0.9324,"stable_count":14,"direct_count":18},"I":{"count":13,"avg_bg":1.216,"avg_score":0.932,"stable_count":8,"direct_count":12},"Cu":{"count":12,"avg_bg":1.23,"avg_score":0.9315,"stable_count":6,"direct_count":12},"Sb":{"count":14,"avg_bg":1.225,"avg_score":0.9308,"stable_count":10,"direct_count":12},"Ge":{"count":14,"avg_bg":1.235,"avg_score":0.9273,"stable_count":12,"direct_count":13},"Br":{"count":5,"avg_bg":1.243,"avg_score":0.9264,"stable_count":5,"direct_count":5},"Co":{"count":2,"avg_bg":1.21,"avg_score":0.9145,"stable_count":2,"direct_count":1},"Sc":{"count":2,"avg_bg":1.025,"avg_score":0.9125,"stable_count":1,"direct_count":2}};
+
+const PT = [
+  [{s:"H",n:1,c:1},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{s:"He",n:2,c:18}],
+  [{s:"Li",n:3,c:1},{s:"Be",n:4,c:2},{},{},{},{},{},{},{},{},{},{},{s:"B",n:5,c:13},{s:"C",n:6,c:14},{s:"N",n:7,c:15},{s:"O",n:8,c:16},{s:"F",n:9,c:17},{s:"Ne",n:10,c:18}],
+  [{s:"Na",n:11,c:1},{s:"Mg",n:12,c:2},{},{},{},{},{},{},{},{},{},{},{s:"Al",n:13,c:13},{s:"Si",n:14,c:14},{s:"P",n:15,c:15},{s:"S",n:16,c:16},{s:"Cl",n:17,c:17},{s:"Ar",n:18,c:18}],
+  [{s:"K",n:19,c:1},{s:"Ca",n:20,c:2},{s:"Sc",n:21,c:3},{s:"Ti",n:22,c:4},{s:"V",n:23,c:5},{s:"Cr",n:24,c:6},{s:"Mn",n:25,c:7},{s:"Fe",n:26,c:8},{s:"Co",n:27,c:9},{s:"Ni",n:28,c:10},{s:"Cu",n:29,c:11},{s:"Zn",n:30,c:12},{s:"Ga",n:31,c:13},{s:"Ge",n:32,c:14},{s:"As",n:33,c:15},{s:"Se",n:34,c:16},{s:"Br",n:35,c:17},{s:"Kr",n:36,c:18}],
+  [{s:"Rb",n:37,c:1},{s:"Sr",n:38,c:2},{s:"Y",n:39,c:3},{s:"Zr",n:40,c:4},{s:"Nb",n:41,c:5},{s:"Mo",n:42,c:6},{s:"Tc",n:43,c:7},{s:"Ru",n:44,c:8},{s:"Rh",n:45,c:9},{s:"Pd",n:46,c:10},{s:"Ag",n:47,c:11},{s:"Cd",n:48,c:12},{s:"In",n:49,c:13},{s:"Sn",n:50,c:14},{s:"Sb",n:51,c:15},{s:"Te",n:52,c:16},{s:"I",n:53,c:17},{s:"Xe",n:54,c:18}],
+  [{s:"Cs",n:55,c:1},{s:"Ba",n:56,c:2},{s:"*",n:57,c:3},{s:"Hf",n:72,c:4},{s:"Ta",n:73,c:5},{s:"W",n:74,c:6},{s:"Re",n:75,c:7},{s:"Os",n:76,c:8},{s:"Ir",n:77,c:9},{s:"Pt",n:78,c:10},{s:"Au",n:79,c:11},{s:"Hg",n:80,c:12},{s:"Tl",n:81,c:13},{s:"Pb",n:82,c:14},{s:"Bi",n:83,c:15},{s:"Po",n:84,c:16},{s:"At",n:85,c:17},{s:"Rn",n:86,c:18}],
+  [{s:"Fr",n:87,c:1},{s:"Ra",n:88,c:2},{s:"**",n:89,c:3},{s:"Rf",n:104,c:4},{s:"Db",n:105,c:5},{s:"Sg",n:106,c:6},{s:"Bh",n:107,c:7},{s:"Hs",n:108,c:8},{s:"Mt",n:109,c:9},{s:"Ds",n:110,c:10},{s:"Rg",n:111,c:11},{s:"Cn",n:112,c:12},{s:"Nh",n:113,c:13},{s:"Fl",n:114,c:14},{s:"Mc",n:115,c:15},{s:"Lv",n:116,c:16},{s:"Ts",n:117,c:17},{s:"Og",n:118,c:18}],
+  [{},{s:"La",n:57,c:4},{s:"Ce",n:58,c:5},{s:"Pr",n:59,c:6},{s:"Nd",n:60,c:7},{s:"Pm",n:61,c:8},{s:"Sm",n:62,c:9},{s:"Eu",n:63,c:10},{s:"Gd",n:64,c:11},{s:"Tb",n:65,c:12},{s:"Dy",n:66,c:13},{s:"Ho",n:67,c:14},{s:"Er",n:68,c:15},{s:"Tm",n:69,c:16},{s:"Yb",n:70,c:17},{s:"Lu",n:71,c:18}],
+  [{},{s:"Ac",n:89,c:4},{s:"Th",n:90,c:5},{s:"Pa",n:91,c:6},{s:"U",n:92,c:7},{s:"Np",n:93,c:8},{s:"Pu",n:94,c:9},{s:"Am",n:95,c:10},{s:"Cm",n:96,c:11},{s:"Bk",n:97,c:12},{s:"Cf",n:98,c:13},{s:"Es",n:99,c:14},{s:"Fm",n:100,c:15},{s:"Md",n:101,c:16},{s:"No",n:102,c:17},{s:"Lr",n:103,c:18}],
+];
+
+let colorMode = 'score';
+let activeEl = null;
+
+function scoreToColor(score) {
+  if (!score) return null;
+  const mn=0.92, mx=1.04, t=Math.min(1,Math.max(0,(score-mn)/(mx-mn)));
+  const stops = [[181,212,244],[55,138,221],[12,68,124]];
+  let r,g,b;
+  if(t<0.5){const u=t*2;r=Math.round(stops[0][0]+(stops[1][0]-stops[0][0])*u);g=Math.round(stops[0][1]+(stops[1][1]-stops[0][1])*u);b=Math.round(stops[0][2]+(stops[1][2]-stops[0][2])*u);}
+  else{const u=(t-0.5)*2;r=Math.round(stops[1][0]+(stops[2][0]-stops[1][0])*u);g=Math.round(stops[1][1]+(stops[2][1]-stops[1][1])*u);b=Math.round(stops[1][2]+(stops[2][2]-stops[1][2])*u);}
+  return `rgb(${r},${g},${b})`;
+}
+
+function bgColor(score) {
+  if(colorMode==='score') return scoreToColor(score);
+  return '#378ADD';
+}
+
+function buildPT() {
+  const grid = document.getElementById('pt-grid');
+  grid.innerHTML='';
+  PT.forEach((row,ri)=>{
+    for(let ci=0;ci<18;ci++){
+      const el=row.find(e=>e.c===ci+1)||{};
+      const div=document.createElement('div');
+      if(!el.s){div.className='cell empty';grid.appendChild(div);continue;}
+      const data=ELEM_MAP[el.s];
+      const stats=ELEM_STATS[el.s];
+      const val=data?(colorMode==='score'?data.score:(stats?stats.avg_bg:null)):null;
+      div.className='cell'+(data?' has-data':' no-data');
+      const col=data?bgColor(val):null;
+      if(col)div.style.background=col;
+      div.innerHTML=`<span class="num">${el.n}</span><span class="sym" style="${col?'color:#fff':''}">${el.s}</span>`;
+      if(data)div.onclick=()=>showPanel(el.s,div);
+      grid.appendChild(div);
+    }
+    if(ri===5){const sp=document.createElement('div');sp.className='cell empty';grid.appendChild(sp);}
+  });
+}
+
+function toggleMode(){
+  colorMode=colorMode==='score'?'bandgap':'score';
+  document.getElementById('mode-btn').textContent=colorMode==='score'?'Score semiconductor':'Band gap promedio';
+  const lg=document.getElementById('legend');
+  if(colorMode==='bandgap'){
+    lg.innerHTML='<div class="leg-box" style="background:#B5D4F4"></div><span>0.9 eV</span><div class="leg-box" style="background:#378ADD;margin-left:2px"></div><span>1.2 eV</span><div class="leg-box" style="background:#0C447C;margin-left:2px"></div><span>1.5 eV</span>';
+  } else {
+    lg.innerHTML='<div class="leg-box" style="background:#B5D4F4"></div><span>bajo</span><div class="leg-box" style="background:#378ADD;margin-left:2px"></div><span>medio</span><div class="leg-box" style="background:#0C447C;margin-left:2px"></div><span>alto</span>';
+  }
+  buildPT();
+  if(activeEl)document.querySelectorAll('.cell.active').forEach(c=>c.classList.remove('active'));
+}
+
+function showPanel(sym,div){
+  const d=ELEM_MAP[sym];
+  const st=ELEM_STATS[sym];
+  if(!d)return;
+  document.querySelectorAll('.cell.active').forEach(c=>c.classList.remove('active'));
+  div.classList.add('active');
+  activeEl=sym;
+  document.getElementById('panel-elem').textContent=sym;
+  document.getElementById('panel-formula').textContent=d.formula;
+  document.getElementById('panel-id').textContent=d.id+' · '+d.crystal_system+' · '+d.nelements+' elementos';
+  const pe=document.getElementById('panel-elems');
+  pe.innerHTML=d.elements.map(e=>`<span class="el-pill${e===sym?' active-el':''}">${e}</span>`).join('');
+  const pb=document.getElementById('panel-badges');
+  pb.innerHTML=`<span class="badge ${d.is_gap_direct?'badge-direct':'badge-indirect'}">${d.is_gap_direct?'Gap directo':'Gap indirecto'}</span><span class="badge badge-stable">${d.is_stable?'Estable':'Inestable'}</span><span class="badge badge-crystal">${d.crystal_system}</span>`;
+  const stats=[
+    {l:'Band gap',v:d.band_gap.toFixed(3),u:'eV'},
+    {l:'Densidad',v:d.density?d.density.toFixed(3):'-',u:'g/cm³'},
+    {l:'Índice n',v:d.n?d.n.toFixed(3):'-',u:'DFT'},
+    {l:'Módulo B',v:d.bulk_modulus?d.bulk_modulus.toFixed(0):'-',u:'GPa'},
+    {l:'Módulo G',v:d.shear_modulus?d.shear_modulus.toFixed(0):'-',u:'GPa'},
+    {l:'E_hull',v:d.energy_above_hull.toFixed(4),u:'eV/at'},
+    {l:'ΔHf/átomo',v:d.formation_energy?d.formation_energy.toFixed(3):'-',u:'eV'},
+    {l:'ε_electrónico',v:d.n?(d.n*d.n).toFixed(2):'-',u:''},
+  ];
+  document.getElementById('panel-grid').innerHTML=stats.map(s=>`<div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-val">${s.v}<span class="stat-unit">${s.u}</span></div></div>`).join('');
+  const pct=Math.min(100,Math.max(0,(d.score-0.9)/(1.05-0.9)*100));
+  document.getElementById('score-bar-fill').style.width=pct.toFixed(1)+'%';
+  document.getElementById('score-val').textContent='Score: '+d.score.toFixed(4)+' (rango 0.9–1.05)';
+  if(st){
+    document.getElementById('elem-stats-title').textContent=`Estadísticas de ${sym} en el pipeline (${st.count} materiales)`;
+    document.getElementById('elem-stats-row').innerHTML=`<div class="elem-stat"><span>Bg prom.</span> ${st.avg_bg} eV</div><div class="elem-stat"><span>Score prom.</span> ${st.avg_score}</div><div class="elem-stat"><span>Estables</span> ${st.stable_count}/${st.count}</div><div class="elem-stat"><span>Gap directo</span> ${st.direct_count}/${st.count}</div>`;
+  }
+  const mp=document.getElementById('panel-mp-link');
+  mp.textContent='Ver en Materials Project →';
+  mp.onclick=()=>openLink('https://next.materialsproject.org/materials/'+d.id);
+  document.getElementById('panel').classList.add('visible');
+}
+
+buildPT();
+</script>
