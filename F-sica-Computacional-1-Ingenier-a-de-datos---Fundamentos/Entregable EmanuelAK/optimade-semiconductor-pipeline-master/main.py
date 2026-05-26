@@ -776,7 +776,8 @@ def run_pipeline():
     generate_all_plots(P["silver"], top_all, alloy_cand, best, elem_df)  # ← aquí
     generate_pdf(top_all, alloy_cand, best, elem_df)
     generate_pdf(top_all, alloy_cand, best, elem_df)
-    from interactive_periodic_table import open_explorer  # opcional si lo conviertes a .py
+    from interactive_periodic_table import open_explorer  # opcional si se convierte a .py
+    open_explorer()  # Abre la tabla periódica en el navegador
     print(f"\nPipeline completado en {time.time()-t0:.1f}s")
     print("\nOutputs:")
     for k, v in P.items():

@@ -21,7 +21,8 @@ optimade-semiconductor-pipeline-master/
 │
 ├── main.py                              # Pipeline principal
 ├── plots_annex.py                       # Generador de gráficas y visualizaciones
-├── periodic_table_semiconductors.html   # Tabla periódica interactiva
+├── interactive_periodic_table.py        # Módulo para abrir tabla periódica
+├── periodic_table_semiconductors.html   # Tabla periódica interactiva (HTML)
 ├── requirements.txt                     # Dependencias Python
 │
 ├── data/                                # Datos (medallón)
@@ -143,7 +144,8 @@ python main.py
 - Tablas Parquet en `data/`
 - Reportes CSV en `data/gold/`
 - Reporte PDF en `artifacts/reports/semiconductor_report.pdf`
-- Tabla periódica interactiva: `periodic_table_semiconductors.html`
+- **Tabla periódica interactiva se abre automáticamente** en el navegador (al finalizar)
+- Archivo HTML disponible en: `periodic_table_semiconductors.html`
 
 ---
 
@@ -168,6 +170,25 @@ python main.py
 - **Gráficas de distribución** de band gaps, índices de refracción, bulk modulus
 - **Scatter plots** de propiedades vs. toxicidad/escasez
 - **Histogramas** de sistemas cristalinos más frecuentes
+
+---
+
+## 🔍 Módulo `interactive_periodic_table.py`
+
+Módulo para visualizar la tabla periódica de semiconductores en el navegador.
+
+### Funciones
+
+**`open_explorer()`**
+- Abre automáticamente `periodic_table_semiconductors.html` en el navegador por defecto
+- Se ejecuta automáticamente al finalizar el pipeline en `main.py`
+- Usa solo bibliotecas estándar de Python (`webbrowser`, `pathlib`)
+- Compatible con Windows, macOS y Linux
+
+### Uso manual
+```bash
+python interactive_periodic_table.py
+```
 
 ---
 
